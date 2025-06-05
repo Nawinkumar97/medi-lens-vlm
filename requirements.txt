@@ -1,0 +1,20 @@
+# Core language models and chains
+openai>=1.3.5
+langchain>=0.1.16
+langgraph>=0.0.24
+
+# Retrieval / embedding tools (optional, for context agent)
+chromadb>=0.4.24
+faiss-cpu>=1.7.4
+tiktoken>=0.5.1
+
+# Web app interface (optional Gradio UI)
+gradio>=4.22.0
+
+# Utilities
+python-dotenv>=1.0.1
+pillow>=10.2.0  # For image processing
+requests>=2.31.0
+
+# For async agent execution & progress
+rich>=13.7.1
