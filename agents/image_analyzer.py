@@ -2,6 +2,7 @@
 
 import base64
 import os
+import re
 from typing import Dict, List, Optional
 from langchain.agents import Agent
 from langchain.schema import BaseMessage, HumanMessage
@@ -9,6 +10,10 @@ from langchain_openai import ChatOpenAI
 from PIL import Image
 import io
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -19,12 +24,18 @@ class ImageAnalyzerAgent:
     """
     
     def __init__(self, api_key: str = None):
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        # Load from config or parameter
+        from config.config import config
+        self.api_key = api_key or config.OPENAI_API_KEY
+        
+        if not self.api_key:
+            raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY in .env file or pass as parameter.")
+        
         self.llm = ChatOpenAI(
-            model="gpt-4o",  # GPT-4 with vision capabilities
+            model=config.GPT_MODEL,
             api_key=self.api_key,
-            temperature=0.1,  # Low temperature for medical analysis
-            max_tokens=1000
+            temperature=config.TEMPERATURE,
+            max_tokens=config.MAX_TOKENS
         )
         
     def encode_image(self, image_path: str) -> str:
