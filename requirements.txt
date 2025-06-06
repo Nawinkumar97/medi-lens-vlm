@@ -18,3 +18,4 @@ requests>=2.31.0
 
 # For async agent execution & progress
 rich>=13.7.1
+asyncio>=3.4.3
