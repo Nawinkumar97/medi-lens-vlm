@@ -9,7 +9,7 @@ faiss-cpu>=1.7.4
 tiktoken>=0.5.1
 
 # Web app interface (optional Gradio UI)
-gradio>=4.22.0
+streamlit>=1.28.0
 
 # Utilities
 python-dotenv>=1.0.1
