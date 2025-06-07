@@ -1,4 +1,4 @@
-# main.py - MediLens AI Diagnostic Pipeline CLI
+# main.py (with validation logging and corrected image path handling)
 
 import os
 import asyncio
@@ -6,8 +6,8 @@ import argparse
 from pathlib import Path
 from graph.langgraph_orchestration import run_medilens_pipeline
 from tools.med_context_loader import MedicalContextLoader
-import logging
 from fpdf import FPDF  # Optional: install with `pip install fpdf`
+import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,7 +18,6 @@ def load_context_if_needed(use_context: bool) -> str:
         logger.info("📚 Loading medical context documents...")
         return MedicalContextLoader().load_context()
     return ""
-
 
 def save_report(output_dir: str, filename: str, report_text: str, as_pdf: bool = False):
     """Save the report as .md or .pdf to the output directory."""
@@ -39,7 +38,6 @@ def save_report(output_dir: str, filename: str, report_text: str, as_pdf: bool =
 
     print(f"💾 Report saved to: {path.with_suffix('.pdf' if as_pdf else '.md')}")
 
-
 def parse_arguments():
     """Define and parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Run the MediLens AI diagnostic pipeline")
@@ -50,18 +48,21 @@ def parse_arguments():
     parser.add_argument("--as-pdf", action="store_true", help="Save reports as PDF instead of Markdown")
     return parser.parse_args()
 
-
 async def run_pipeline_for_image(image_path: str, query: str, context: str, output: str, as_pdf: bool):
     print(f"\n🚀 Running pipeline for image: {image_path}")
+    logger.info(f"🖼️ Validating image path: {image_path}")
+
+    if not os.path.isfile(image_path):
+        logger.error(f"❌ Image path does not exist or is not a file: {image_path}")
+        return
+
     result = await run_medilens_pipeline(image_path=image_path, clinical_query=query, context=context)
     report_text = result["final_report"]
     print("\n🧾 Report Preview:\n")
     print(report_text[:500] + "...\n")
 
-    # Save
     base_name = Path(image_path).stem + "_report"
     save_report(output, base_name, report_text, as_pdf=as_pdf)
-
 
 async def main():
     args = parse_arguments()
@@ -80,7 +81,6 @@ async def main():
             await run_pipeline_for_image(str(img), args.query, context, args.output, args.as_pdf)
     else:
         print("❌ Provided image path is invalid.")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

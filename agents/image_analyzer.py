@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 logger = logging.getLogger(__name__)
+if not logger.hasHandlers():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 class ImageAnalyzerAgent:
     """
@@ -50,18 +52,18 @@ class ImageAnalyzerAgent:
         try:
             with Image.open(image_path) as img:
                 width, height = img.size
+                img_format = (img.format or "").upper()
                 if width < 100 or height < 100 or width > 4096 or height > 4096:
                     return False
-                if img.format not in ["JPEG", "PNG"]:
+                if img_format not in ["JPEG", "PNG"]:
                     return False
                 return True
-        except Exception:
+        except Exception as e:
+            logger.error(f"Validation error: {e}")
             return False
 
     def analyze_image(self, image_path: str, clinical_query: str = "") -> Dict:
         """Full analysis pipeline for a medical image."""
-        from utilis import config
-
         if not self.validate_medical_image(image_path):
             raise ValueError("Invalid medical image format or size")
 
@@ -69,11 +71,21 @@ class ImageAnalyzerAgent:
         analysis_prompt = self._build_analysis_prompt(clinical_query)
 
         try:
+            ext = os.path.splitext(image_path)[1].lower()
+            mime_type = {
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.png': 'image/png',
+                '.bmp': 'image/bmp',
+                '.tif': 'image/tiff',
+                '.tiff': 'image/tiff'
+            }.get(ext, 'image/jpeg')
+
             message = HumanMessage(
                 content=[
                     {"type": "text", "text": analysis_prompt},
                     {"type": "image_url", "image_url": {
-                        "url": f"data:image/jpeg;base64,{base64_image}",
+                        "url": f"data:{mime_type};base64,{base64_image}",
                         "detail": "high"
                     }}
                 ]
